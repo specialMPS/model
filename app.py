@@ -1,7 +1,7 @@
 import json
 
-from flask import Flask, request, make_response
-import kogpt2_chat as chatbot
+from flask import Flask, request
+from model.chat import kogpt2_chat as chatbot
 import os
 
 app = Flask(__name__)
