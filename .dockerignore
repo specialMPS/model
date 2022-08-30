@@ -1,1 +1,9 @@
+.git
+.gitignore
 venv/
+
+__pycache__
+
+*.tar
+
+*/__pycache__/*
