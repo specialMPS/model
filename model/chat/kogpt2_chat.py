@@ -5,7 +5,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.core.lightning import LightningModule
 from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
 
-from train import KoGPT2Chat
+from preprocess.train import KoGPT2Chat
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
