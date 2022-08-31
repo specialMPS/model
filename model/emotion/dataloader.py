@@ -17,12 +17,13 @@ class WellnessTextClassificationDataset(Dataset):
         self.tokenizer = tokenizer if tokenizer is not None else get_tokenizer()
 
         file = open(self.file_path, 'r', encoding='utf-8')
+        # file = open(self.file_path, 'r', encoding='cp949')
 
         while True:
             line = file.readline()
             if not line:
                 break
-            datas = line.split("    ")
+            datas = line.split("\t")
             index_of_words = self.tokenizer.encode(datas[0])
             token_type_ids = [0] * len(index_of_words)
             attention_mask = [1] * len(index_of_words)
