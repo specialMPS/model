@@ -2,6 +2,7 @@ import json
 
 from flask import Flask, request
 from model.chat import kogpt2_chat as chatbot
+from model.emotion import kobert_test as emotion
 import os
 
 app = Flask(__name__)
@@ -31,9 +32,9 @@ def emotion():
             "answer" : "계속 얘기해주세요~~"
         }, ensure_ascii=False)
 
-    answer = chatbot.predict(sent)
+    answer = emotion.predict(sent)
     return json.dumps({
-        "answer" : answer
+        "emotion" : answer
     }, ensure_ascii=False)
 
 
