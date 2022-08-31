@@ -118,10 +118,10 @@ class KoGPT2Chat(LightningModule):
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
 args = parser.parse_args()
-
 # --------------------------------------------
 # 여기서부터 새로 만들기
 # --------------------------------------------
+
 model = KoGPT2Chat(args)
 model = model.load_from_checkpoint(args.model_params)
 

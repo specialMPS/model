@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import random
 
-from model.model.emotion.classifier import KoBERTforSequenceClassification
+from model.emotion.classifier import KoBERTforSequenceClassification
 from kobert_transformers import get_tokenizer
 
 
@@ -41,6 +41,7 @@ def kobert_input(tokenizer, str, device=None, max_seq_len=512):
 
 
 if __name__ == "__main__":
+# def kobert():
     checkpoint_path = "././checkpoint"
     save_ckpt_path = f"{checkpoint_path}/kobert_wellness.pth"
 
