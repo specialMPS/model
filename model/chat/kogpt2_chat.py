@@ -7,6 +7,12 @@ from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
 
 from preprocess.train_gpt import KoGPT2Chat
 
+# test-----------------------
+from eunjeon import Mecab
+
+mecab = Mecab()
+# ----------------------------
+
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
 parser.add_argument('--chat',
@@ -78,26 +84,48 @@ class KoGPT2Chat(LightningModule):
         output = self.kogpt2(inputs, return_dict=True)
         return output.logits
 
-# --------------------------------------------
-# 여기서부터
-# --------------------------------------------
     def chat(self, input_sentence, sent='0'):
-        tok = TOKENIZER
-        sent_tokens = tok.tokenize(sent)
-        with torch.no_grad():
-            q = input_sentence.strip()
-            a = ''
-            while 1:
-                input_ids = torch.LongTensor(tok.encode(U_TKN + q + SENT + sent + S_TKN + a)).unsqueeze(dim=0)
-                pred = self(input_ids)
-                gen = tok.convert_ids_to_tokens(torch.argmax(pred, dim=-1).squeeze().numpy().tolist())[-1]
-                # print(gen) # <pad>
-                if gen == EOS or gen == PAD: # PAD 무한 루프 에러 방지
-                    break
-                a += gen.replace('▁', ' ')
+        # test mecab
+        # mecab으로 품사 태깅
+        jko = False
+        m_pos = mecab.pos(input_sentence)
+        print(input_sentence)
 
-            a = a.strip()
-            return a
+        for i in m_pos:
+            print(i)
+            if input_sentence == '안녕' or input_sentence == '안녕하세요':
+                jko = True
+                break
+            elif 'JKO' in i:
+                jko = True
+                print('jko true')
+                break
+            else:
+                print('jko false')
+
+        if jko == False:
+            answer = "왜요??"
+            return answer
+        elif jko == True:
+            tok = TOKENIZER
+            sent_tokens = tok.tokenize(sent)
+            print(sent_tokens)
+            with torch.no_grad():
+                q = input_sentence.strip()
+                a = ''
+                while 1:
+                    input_ids = torch.LongTensor(tok.encode(U_TKN + q + SENT + sent + S_TKN + a)).unsqueeze(dim=0)
+                    pred = self(input_ids)
+                    gen = tok.convert_ids_to_tokens(torch.argmax(pred, dim=-1).squeeze().numpy().tolist())[-1]
+                    # print(gen) # <pad>
+                    if gen == EOS or gen == PAD: # PAD 무한 루프 에러 방지
+                        break
+                    a += gen.replace('▁', ' ')
+
+                a = a.strip()
+                if a == "":
+                    return "듣고 있어요. 계속 얘기해주세요!"
+                return a
             # a = a.strip()
             # period_pos = a.rfind(".")
             # question_pos = a.rfind("?")
@@ -111,16 +139,10 @@ class KoGPT2Chat(LightningModule):
             # if a == "":
             #     return "(끄덕끄덕) 듣고 있어요. 더 말씀해주세요!"
             # return  a
-# --------------------------------------------
-# 여기까지 코드 수정
-# --------------------------------------------
 
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
 args = parser.parse_args()
-# --------------------------------------------
-# 여기서부터 새로 만들기
-# --------------------------------------------
 
 model = KoGPT2Chat(args)
 model = model.load_from_checkpoint(args.model_params)
