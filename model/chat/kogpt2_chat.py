@@ -11,6 +11,9 @@ from preprocess.train_gpt import KoGPT2Chat
 from eunjeon import Mecab
 
 mecab = Mecab()
+# from konlpy.tag import Kkma
+#
+# kkma = Kkma()
 # ----------------------------
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
@@ -87,26 +90,66 @@ class KoGPT2Chat(LightningModule):
     def chat(self, input_sentence, sent='0'):
         # test mecab
         # mecab으로 품사 태깅
-        jko = False
+        # test kkma
+        # kkma로 품사 태깅
+        # total check
+        jjx = False
+
+        # m_pos = mecab.pos(input_sentence)
         m_pos = mecab.pos(input_sentence)
         print(input_sentence)
 
-        for i in m_pos:
-            print(i)
+        for index, value in enumerate(m_pos):
+            # 처음 인사할 때 제외
             if input_sentence == '안녕' or input_sentence == '안녕하세요':
-                jko = True
+                jjx = True
                 break
-            elif 'JKO' in i:
-                jko = True
+            # 목적어가 생략되어 있는지 확인, 목적어가 없다고 하더라도 다른 형태가 목적어를 대신하고 있는지 확인
+            elif 'JKO' in value[1]:
+                jjx = True
                 print('jko true')
                 break
+            elif 'JKS' in value[1]:
+                jjx = True
+                print('jks true')
+                break
+            elif 'JKC' in value[1]:
+                jjx = True
+                print('jkc true')
+                break
+            elif 'XSA' in value[1]:
+                jjx = True
+                print('xsa true')
+                break
+            elif 'SF' in value[1] and '?' in value[0]:
+                jjx = True
+            elif '모르' in value[0]:
+                jjx = True
             else:
-                print('jko false')
+                print('jjx false')
 
-        if jko == False:
-            answer = "왜요??"
+        # 목적어가 생략된 문장에서 다시 되물어 보기 위해 질문 만들기
+        # for문 제일 마지막에 왔을 때
+        ind = len(m_pos)-1
+        if jjx == False:
+            # 마지막에 마침표 물음표 느낌표가 있는지 확인
+            # 있다면 index를 1을 줄여서 확인
+            if 'SF' in m_pos[ind][1]:
+                print('sf')
+                ind = ind - 1
+            if 'EC' in m_pos[ind][1] or 'EF' in m_pos[ind][1]:
+                ind = ind - 1
+            if 'EP' in m_pos[ind][1]:
+                print('ep')
+                if 'VV' in m_pos[ind - 1] or 'VA' in m_pos[ind - 1] or 'XR' in m_pos[ind - 1]:
+                    answer = "왜 " + m_pos[ind - 1][0] + m_pos[ind][0] + "어요??"
+                    return answer
+                else:
+                    answer = "왜 " + m_pos[ind][0] + "어요??"
+                    return answer
+            answer = "왜요?"
             return answer
-        elif jko == True:
+        if jjx == True:
             tok = TOKENIZER
             sent_tokens = tok.tokenize(sent)
             print(sent_tokens)
@@ -123,22 +166,17 @@ class KoGPT2Chat(LightningModule):
                     a += gen.replace('▁', ' ')
 
                 a = a.strip()
+                # period_pos = a.rfind(".")
+                # question_pos = a.rfind("?")
+                # exclamation_pos = a.rfind("!")
+                # last_pos = len(a) - 1
+                # if last_pos == period_pos or last_pos == question_pos or last_pos == exclamation_pos:
+                #     return a
+                # mark_pos = max(max(period_pos, question_pos), exclamation_pos)
+                # a = a[:mark_pos + 1]
                 if a == "":
                     return "듣고 있어요. 계속 얘기해주세요!"
                 return a
-            # a = a.strip()
-            # period_pos = a.rfind(".")
-            # question_pos = a.rfind("?")
-            # exclamation_pos = a.rfind("!")
-            # last_pos = len(a) - 1
-            # # print (str(period_pos) + " " + str(question_pos) + " " + str(exclamation_pos))
-            # if last_pos == period_pos or last_pos == question_pos or last_pos == exclamation_pos:
-            #     return as
-            # mark_pos = max(max(period_pos, question_pos), exclamation_pos)
-            # a = a[:mark_pos + 1]
-            # if a == "":
-            #     return "(끄덕끄덕) 듣고 있어요. 더 말씀해주세요!"
-            # return  a
 
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
