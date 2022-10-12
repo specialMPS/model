@@ -1,11 +1,11 @@
-FROM python:3.8.5
+FROM python:3.10
 
 WORKDIR /app
 COPY . .
 
 RUN pip install --upgrade pip
-RUN pip install -r requirement.txt
+RUN pip install -r requirements.txt
 
-EXPOSE 8080
+EXPOSE 2030
 
 CMD python ./app.py
