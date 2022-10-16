@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from kobert_transformers import get_kobert_model
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -7,7 +6,7 @@ from transformers import BertPreTrainedModel
 from model.emotion.configuration import get_kobert_config
 
 
-class KoBERTforSequenceClassification(BertPreTrainedModel):
+class KoBERTforEmotionClassification(BertPreTrainedModel):
     def __init__(self,
                  num_labels=9,
                  hidden_size=768,

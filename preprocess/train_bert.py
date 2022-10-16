@@ -7,8 +7,8 @@ from torch.utils.data import dataloader
 from tqdm import tqdm
 from transformers import AdamW
 
-from model.model.emotion.classifier import KoBERTforSequenceClassification
-from model.model.emotion.dataloader import WellnessTextClassificationDataset
+from model.emotion.classifier import KoBERTforEmotionClassification
+from model.emotion.dataloader import EmotionDataset
 
 
 def train(device, epoch, model, optimizer, train_loader, save_step, save_ckpt_path, train_step=0):
@@ -51,22 +51,22 @@ if __name__ == '__main__':
     gc.collect()
     torch.cuda.empty_cache()
 
-    data_path = "././data/wellness_dataset.txt"
-    checkpoint_path = "././checkpoint"
-    save_ckpt_path = f"{checkpoint_path}/kobert_wellness.pth"
+    data_path = "../data/data_final_cleaned.csv"
+    checkpoint_path = "../checkpoint"
+    save_ckpt_path = f"{checkpoint_path}/kobert.pth"
 
-    n_epoch = 60  # Num of Epoch
-    batch_size = 4   # 배치 사이즈 #8 or 16
+    n_epoch = 20
+    batch_size = 64
     ctx = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(ctx)
     save_step = 100  # 학습 저장 주기
-    learning_rate = 5e-6  # Learning Rate
+    learning_rate = 5e-5  # Learning Rate
 
-    # WellnessTextClassificationDataset Data Loader
-    dataset = WellnessTextClassificationDataset(file_path=data_path, device=device)
+    # EmotionDataset Data Loader
+    dataset = EmotionDataset(file_path=data_path, device=device)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-    model = KoBERTforSequenceClassification()
+    model = KoBERTforEmotionClassification()
     model.to(device)
 
     # Prepare optimizer and schedule (linear warmup and decay)

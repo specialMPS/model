@@ -2,25 +2,12 @@ import torch
 import torch.nn as nn
 import random
 
-from model.emotion.classifier import KoBERTforSequenceClassification
+from model.emotion.classifier import KoBERTforEmotionClassification
 from kobert_transformers import get_tokenizer
 
 
-def load_wellness_answer():
-    category_path = "././data/emotion_category.txt"
-    c_f = open(category_path, 'r')
-    category_lines = c_f.readlines()
-    category = {}
-
-    for line_num, line_data in enumerate(category_lines):
-        data = line_data.split('    ')
-        category[data[1][:-1]] = data[0]
-
-    return category
-
-
-def kobert_input(tokenizer, str, device=None, max_seq_len=512):
-    index_of_words = tokenizer.encode(str)
+def kobert_input(tok, str, device=None, max_seq_len=128):
+    index_of_words = tok.encode(str)
     token_type_ids = [0] * len(index_of_words)
     attention_mask = [1] * len(index_of_words)
 
@@ -37,24 +24,34 @@ def kobert_input(tokenizer, str, device=None, max_seq_len=512):
         'token_type_ids': torch.tensor([token_type_ids]).to(device),
         'attention_mask': torch.tensor([attention_mask]).to(device),
     }
+
     return data
 
 
 if __name__ == "__main__":
-# def kobert():
-    checkpoint_path = "././checkpoint"
-    save_ckpt_path = f"{checkpoint_path}/kobert_wellness.pth"
 
-    # 답변과 카테고리 불러오기
-    category = load_wellness_answer()
+    checkpoint_path = "../../checkpoint"
+    save_ckpt_path = f"{checkpoint_path}/kobert.pth"
+
+    # 답변과 카테고리 불러 오기
+    emotion_labels = {'중립': 0,
+                      '기쁨': 1,
+                      '놀람': 2,
+                      '긴장됨': 3,
+                      '괴로움': 4,
+                      '화남': 5,
+                      '비참함': 6,
+                      '우울함': 7,
+                      '피로함': 8}
+    flip_emotion_labels = {v: k for k, v in emotion_labels.items()}
 
     ctx = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(ctx)
 
-    # 저장한 Checkpoint 불러오기
+    # 저장한 Checkpoint 불러 오기
     checkpoint = torch.load(save_ckpt_path, map_location=device)
 
-    model = KoBERTforSequenceClassification()
+    model = KoBERTforEmotionClassification()
     model.load_state_dict(checkpoint['model_state_dict'])
 
     model.to(ctx)
@@ -63,8 +60,8 @@ if __name__ == "__main__":
     tokenizer = get_tokenizer()
 
     while 1:
-        sent = input('\nQuestion: ')  # '요즘 기분이 우울한 느낌이에요'
-        data = kobert_input(tokenizer, sent, device, 512)
+        sent = input('\nSentence: ')  # '요즘 기분이 우울한 느낌이에요'
+        data = kobert_input(tokenizer, sent, device, 128)
 
         if '종료' in sent:
             break
@@ -78,7 +75,7 @@ if __name__ == "__main__":
         max_index = torch.argmax(softmax_logit).item()
         max_index_value = softmax_logit[torch.argmax(softmax_logit)].item()
 
-        emotion = category[str(max_index)]
+        emotion = flip_emotion_labels[max_index]
 
         print(f'index: {max_index}, emotion: {emotion}, softmax_value: {max_index_value}')
         print('-' * 50)
