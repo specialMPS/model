@@ -52,7 +52,8 @@ if __name__ == "__main__":
     checkpoint = torch.load(save_ckpt_path, map_location=device)
 
     model = KoBERTforEmotionClassification()
-    model.load_state_dict(checkpoint['model_state_dict'])
+    # model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint, strict=False)
 
     model.to(ctx)
     model.eval()
@@ -77,5 +78,5 @@ if __name__ == "__main__":
 
         emotion = flip_emotion_labels[max_index]
 
-        print(f'index: {max_index}, emotion: {emotion}, softmax_value: {max_index_value}')
+        print(f'Emotion: {emotion}, softmax_value: {max_index_value}')
         print('-' * 50)
