@@ -7,14 +7,13 @@ from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
 
 from preprocess.train_gpt import KoGPT2Chat
 
-# test-----------------------
+
 # from eunjeon import Mecab
 
 # mecab = Mecab()
 from konlpy.tag import Kkma
 
 kkma = Kkma()
-# ----------------------------
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
@@ -123,8 +122,8 @@ class KoGPT2Chat(LightningModule):
                 break
             elif 'SF' in value[1] and '?' in value[0]:
                 jjx = True
-            elif '모르' in value[0]:
-                jjx = True
+            # elif '모르' in value[0]:
+            #     jjx = True
             else:
                 print('jjx false')
 
@@ -147,8 +146,9 @@ class KoGPT2Chat(LightningModule):
                 else:
                     answer = "왜 " + k_pos[ind][0] + "어요??"
                     return answer
-            answer = "왜요?"
-            return answer
+            # answer = "왜요?"
+            # return answer
+            jjx = True
 
         if jjx == True:
             tok = TOKENIZER
