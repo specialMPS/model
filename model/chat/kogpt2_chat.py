@@ -167,14 +167,15 @@ class KoGPT2Chat(LightningModule):
                     a += gen.replace('▁', ' ')
 
                 a = a.strip()
-                # period_pos = a.rfind(".")
-                # question_pos = a.rfind("?")
-                # exclamation_pos = a.rfind("!")
-                # last_pos = len(a) - 1
-                # if last_pos == period_pos or last_pos == question_pos or last_pos == exclamation_pos:
-                #     return a
-                # mark_pos = max(max(period_pos, question_pos), exclamation_pos)
-                # a = a[:mark_pos + 1]
+                period_pos = a.rfind(".")
+                question_pos = a.rfind("?")
+                exclamation_pos = a.rfind("!")
+                last_pos = len(a) - 1
+                # 마지막 위치가 . ? !와 같은 위치이면 한 문장이 끝나는 것이여서 그대로 a 반환
+                if last_pos == period_pos or last_pos == question_pos or last_pos == exclamation_pos:
+                    return a
+                mark_pos = max(max(period_pos, question_pos), exclamation_pos)
+                a = a[:mark_pos + 1]
                 if a == "":
                     return "듣고 있어요. 계속 얘기해주세요!"
                 return a
