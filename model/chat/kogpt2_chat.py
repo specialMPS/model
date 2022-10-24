@@ -8,12 +8,12 @@ from transformers import PreTrainedTokenizerFast, GPT2LMHeadModel
 from preprocess.train_gpt import KoGPT2Chat
 
 
-# from eunjeon import Mecab
+from eunjeon import Mecab
 
-# mecab = Mecab()
-from konlpy.tag import Kkma
-
-kkma = Kkma()
+mecab = Mecab()
+# from konlpy.tag import Kkma
+#
+# kkma = Kkma()
 
 parser = argparse.ArgumentParser(description='Simsimi based on KoGPT-2')
 
@@ -94,11 +94,11 @@ class KoGPT2Chat(LightningModule):
         # total check
         jjx = False
 
-        k_pos = kkma.pos(input_sentence)
-        # m_pos = mecab.pos(input_sentence)
+        # k_pos = kkma.pos(input_sentence)
+        m_pos = mecab.pos(input_sentence)
         print(input_sentence)
 
-        for index, value in enumerate(k_pos):
+        for index, value in enumerate(m_pos):
             # 처음 인사할 때 제외
             if input_sentence == '안녕' or input_sentence == '안녕하세요':
                 jjx = True
@@ -129,22 +129,22 @@ class KoGPT2Chat(LightningModule):
 
         # 목적어가 생략된 문장에서 다시 되물어 보기 위해 질문 만들기
         # for문 제일 마지막에 왔을 때
-        ind = len(k_pos)-1
+        ind = len(m_pos)-1
         if jjx == False:
             # 마지막에 마침표 물음표 느낌표가 있는지 확인
             # 있다면 index를 1을 줄여서 확인
-            if 'SF' in k_pos[ind][1]:
+            if 'SF' in m_pos[ind][1]:
                 print('sf')
                 ind = ind - 1
-            if 'EC' in k_pos[ind][1] or 'EF' in k_pos[ind][1]:
+            if 'EC' in m_pos[ind][1] or 'EF' in m_pos[ind][1]:
                 ind = ind - 1
-            if 'EP' in k_pos[ind][1]:
+            if 'EP' in m_pos[ind][1]:
                 print('ep')
-                if 'VV' in k_pos[ind - 1] or 'VA' in k_pos[ind - 1] or 'XR' in k_pos[ind - 1]:
-                    answer = "왜 " + k_pos[ind - 1][0] + k_pos[ind][0] + "어요??"
+                if 'VV' in m_pos[ind - 1] or 'VA' in m_pos[ind - 1] or 'XR' in m_pos[ind - 1]:
+                    answer = "왜 " + m_pos[ind - 1][0] + m_pos[ind][0] + "어요??"
                     return answer
                 else:
-                    answer = "왜 " + k_pos[ind][0] + "어요??"
+                    answer = "왜 " + m_pos[ind][0] + "어요??"
                     return answer
             # answer = "왜요?"
             # return answer
