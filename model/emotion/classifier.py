@@ -1,60 +1,35 @@
+import torch
 import torch.nn as nn
-from kobert_transformers import get_kobert_model
-from torch.nn import CrossEntropyLoss, MSELoss
-from transformers import BertPreTrainedModel
-
-from model.emotion.configuration import get_kobert_config
 
 
-class KoBERTforEmotionClassification(BertPreTrainedModel):
+class EmotionClassifier(nn.Module):
     def __init__(self,
-                 num_labels=9,
+                 bert,
                  hidden_size=768,
-                 hidden_dropout_prob=0.1,
-                 ):
-        super().__init__(get_kobert_config())
+                 num_classes=9,
+                 dr_rate=None,
+                 params=None):
+        super(EmotionClassifier, self).__init__()
+        self.bert = bert
+        self.dr_rate = dr_rate
 
-        self.num_labels = num_labels
-        self.kobert = get_kobert_model()
-        self.dropout = nn.Dropout(hidden_dropout_prob)
-        self.classifier = nn.Linear(hidden_size, num_labels)
+        self.classifier = nn.Linear(hidden_size, num_classes)
+        if dr_rate:
+            self.dropout = nn.Dropout(p=dr_rate)
 
-        self.init_weights()
+    def gen_attention_mask(self, token_ids, valid_length):
+        attention_mask = torch.zeros_like(token_ids)
+        for i, v in enumerate(valid_length):
+            attention_mask[i][:v] = 1
+        return attention_mask.float()
 
-    def forward(
-            self,
-            input_ids=None,
-            attention_mask=None,
-            token_type_ids=None,
-            position_ids=None,
-            head_mask=None,
-            inputs_embeds=None,
-            labels=None,
-    ):
-        outputs = self.kobert(
-            input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            position_ids=position_ids,
-            head_mask=head_mask,
-            inputs_embeds=inputs_embeds,
-        )
+    def forward(self, token_ids, valid_length, segment_ids):
+        attention_mask = self.gen_attention_mask(token_ids, valid_length)
 
-        pooled_output = outputs[1]
+        _, pooler = self.bert(input_ids=token_ids, token_type_ids=segment_ids.long(),
+                              attention_mask=attention_mask.float().to(token_ids.device), return_dict=False)
 
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
+        if self.dr_rate:
+            out = self.dropout(pooler)
 
-        outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
-
-        if labels is not None:
-            if self.num_labels == 1:
-                #  We are doing regression
-                loss_fct = MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
-            else:
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-            outputs = (loss,) + outputs
-
-        return outputs  # (loss), logits, (hidden_states), (attentions)
+        return self.classifier(out)
