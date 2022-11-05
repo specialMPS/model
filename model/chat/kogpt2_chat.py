@@ -93,15 +93,20 @@ class KoGPT2Chat(LightningModule):
         bf_sent = ''  # 이전 문장
         sent_len = len(kss.split_sentences(s))  # 쪼개진 문장 전체 길이
         for i, sent in enumerate(kss.split_sentences(s), start=1):  # 쪼개진 문장 중에 마지막 문장만 가져오기
-            if sent_len != i:
+            if sent_len <= 1:
+                break
+            elif sent_len != i:
                 bf_sent = sent
             else:
                 mpos = mecab.pos(input_sentence)
                 for index, value in enumerate(mpos):
+                    print("input_sentence : ", input_sentence)
                     if 'SY' in value[1] or 'SC' in value[1]:
                         input_sentence = bf_sent
+                        break
                     elif 'MAG' == value[1]:
                         input_sentence = bf_sent
+                        break
                     else:
                         input_sentence = sent
         print("kss : {}".format(input_sentence))
@@ -112,98 +117,25 @@ class KoGPT2Chat(LightningModule):
         input_sentence = result['checked']
         print("hanspell : {}".format(input_sentence))
 
-        # 3. mecab을 이용해 형태소 분석 후 되묻는 질문 만들기
-        # total check
-        jjx = False
-
-        m_pos = mecab.pos(input_sentence)
-        print(input_sentence)
-        print(m_pos)
-
-        for index, value in enumerate(m_pos):
-            # 처음 인사할 때 제외
-            if '안녕' in value[0] or '안녕하세요' in value[0] or '하이' in value[0]:
-                jjx = True
-                break
-            elif '고마워' in value[0] or '고마워요' in value[0]:
-                jjx = True
-                break
-            # 목적어가 생략되어 있는지 확인, 목적어가 없다고 하더라도 다른 형태가 목적어를 대신하고 있는지 확인
-            # 목적격 조사
-            elif 'JKO' in value[1]:
-                jjx = True
-                print('jko true')
-                break
-            # 주격 조사
-            elif 'JKS' in value[1]:
-                jjx = True
-                print('jks true')
-                break
-            # 보격 조사
-            elif 'JKC' in value[1]:
-                jjx = True
-                print('jkc true')
-                break
-            # 형용사 파생 접미사
-            elif 'XSA' in value[1]:
-                jjx = True
-                print('xsa true')
-                break
-            # 마침표, 물음표, 느낌표
-            elif 'SF' in value[1] and '?' in value[0]:
-                jjx = True
-                break
-            elif '모르' in value[0] or '몰라' in value[0]:
-                jjx = True
-            # 접속 부사
-            elif 'MAJ' in value[1]:
-                jjx = True
-                break
-            else:
-                print('jjx false')
-
-        # 목적어가 생략된 문장에서 다시 되물어 보기 위해 질문 만들기
-        # for문 제일 마지막에 왔을 때
-        ind = len(m_pos)-1
-        if jjx == False:
-            # 마지막에 마침표 물음표 느낌표가 있는지 확인
-            # 있다면 index를 1을 줄여서 확인
-            # if 'SF' in m_pos[ind][1]:
-            #     print('sf')
-            #     ind = ind - 1
-            # if 'EC' in m_pos[ind][1] or 'EF' in m_pos[ind][1]:
-            #     ind = ind - 1
-            # if 'EP' in m_pos[ind][1]:
-            #     print('ep')
-            #     if 'VV' in m_pos[ind - 1] or 'VA' in m_pos[ind - 1] or 'XR' in m_pos[ind - 1]:
-            #         answer = "왜 " + m_pos[ind - 1][0] + m_pos[ind][0] + "어요??"
-            #         return answer
-            #     else:
-            #         answer = "왜 " + m_pos[ind][0] + "어요??"
-            #         return answer
-            answer = "좀 더 자세히 말해줄 수 있나요?"
-            return answer
-            jjx = True
-
-        if jjx == True:
-            tok = TOKENIZER
-            sent_tokens = tok.tokenize(sent)
-            print(sent_tokens)
-            with torch.no_grad():
-                q = input_sentence.strip()
-                a = ''
-                while 1:
-                    input_ids = torch.LongTensor(tok.encode(U_TKN + q + SENT + sent + S_TKN + a)).unsqueeze(dim=0)
-                    pred = self(input_ids)
-                    gen = tok.convert_ids_to_tokens(torch.argmax(pred, dim=-1).squeeze().numpy().tolist())[-1]
-                    # print(gen) # <pad>
-                    if gen == EOS or gen == PAD: # PAD 무한 루프 에러 방지
-                        break
-                    a += gen.replace('▁', ' ')
-                a = a.strip()
-                if a == "":
-                    return "듣고 있어요. 계속 얘기해주세요!"
-                return a
+        # 3. 문장생성
+        tok = TOKENIZER
+        sent_tokens = tok.tokenize(sent)
+        print(sent_tokens)
+        with torch.no_grad():
+            q = input_sentence.strip()
+            a = ''
+            while 1:
+                input_ids = torch.LongTensor(tok.encode(U_TKN + q + SENT + sent + S_TKN + a)).unsqueeze(dim=0)
+                pred = self(input_ids)
+                gen = tok.convert_ids_to_tokens(torch.argmax(pred, dim=-1).squeeze().numpy().tolist())[-1]
+                # print(gen) # <pad>
+                if gen == EOS or gen == PAD: # PAD 무한 루프 에러 방지
+                    break
+                a += gen.replace('▁', ' ')
+            a = a.strip()
+            if a == "":
+                return "듣고 있어요. 계속 얘기해주세요!"
+            return a
 
 parser = KoGPT2Chat.add_model_specific_args(parser)
 parser = Trainer.add_argparse_args(parser)
