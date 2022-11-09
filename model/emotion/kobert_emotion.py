@@ -52,7 +52,7 @@ model = torch.load('../../checkpoint/kobert_v2.pt', map_location=device)
 model.load_state_dict(torch.load('../../checkpoint/kobert_v2_state_dict.pt'))
 
 # 모델 불러오기 - 방법 2
-checkpoint = torch.load('../../checkpoint/kobert_v2.pth', map_location=device)
+checkpoint = torch.load('../../checkpoint/kobert_v2.pt', map_location=device)
 model.load_state_dict(checkpoint, strict=False)
 
 model.eval()
