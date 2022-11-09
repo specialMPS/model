@@ -3,14 +3,16 @@ import tracemalloc
 
 from flask import Flask, request
 from model.chat import kogpt2_chat as chatbot
-# from model.emotion import kobert_test as emotion
+from model.emotion import kobert_emotion as emotion
 import os
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def hello_world():
     return "Hello World"
+
 
 @app.route('/chat')
 def chat():
@@ -25,19 +27,20 @@ def chat():
         "answer" : answer
     }, ensure_ascii=False)
 
-# @app.route('/emotion')
-# def emotion():
-#     sent = request.args.get('s')
-#     if sent is None or len(sent) == 0:
-#         return json.dumps({
-#             "answer" : "계속 얘기해주세요~~"
-#         }, ensure_ascii=False)
-#
-#     answer = emotion.predict(sent)
-#     return json.dumps({
-#         "emotion" : answer
-#     }, ensure_ascii=False)
-#
+
+@app.route('/emotion')
+def emotion():
+    sent = request.args.get('s')
+    if sent is None or len(sent) == 0:
+        return json.dumps({
+            "answer" : "계속 얘기해주세요~~"
+        }, ensure_ascii=False)
+
+    answer = emotion.predict(sent)
+    return json.dumps({
+        "emotion" : answer
+    }, ensure_ascii=False)
+
 
 if __name__ == '__main__':
     tracemalloc.start()
